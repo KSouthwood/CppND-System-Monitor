@@ -67,7 +67,9 @@ void printMain(SysInfo sys, ProcessContainer procs)
     initscr(); /* Start curses mode 		  */
     noecho(); // not printing input values
     cbreak(); // Terminating on classic ctrl + c
+    nodelay(stdscr, true); // enable non-blocking getch() call - we can exit the program without resorting to ctrl-c
     start_color(); // Enabling color change of text
+    bool exitLoop = true;
     int yMax, xMax;
     getmaxyx(stdscr, yMax, xMax); // getting size of window measured in lines and columns(column one char length)
     WINDOW *sys_win = newwin(17, xMax - 1, 0, 0);
@@ -77,16 +79,22 @@ void printMain(SysInfo sys, ProcessContainer procs)
     init_pair(1, COLOR_BLUE, COLOR_BLACK);
     init_pair(2, COLOR_GREEN, COLOR_BLACK);
     int counter = 0;
-    while (1) {
+
+    while (exitLoop) {
         box(sys_win, 0, 0);
         box(proc_win, 0, 0);
         procs.refreshList();
-        std::vector<std::vector < std::string>> processes = procs.getList();
+        std::vector<std::vector <std::string>> processes = procs.getList();
         writeSysInfoToConsole(sys, sys_win);
         getProcessListToConsole(processes[counter], proc_win);
         wrefresh(sys_win);
         wrefresh(proc_win);
         refresh();
+
+        if (getch() != ERR) {
+            exitLoop = false;
+        }
+
         sleep(1);
         if (counter == (processes.size() - 1)) {
             counter = 0;
@@ -94,6 +102,7 @@ void printMain(SysInfo sys, ProcessContainer procs)
             counter++;
         }
     }
+    
     endwin();
 }
 
@@ -101,7 +110,7 @@ int main(int argc, char *argv[])
 {
     //Object which contains list of current processes, Container for Process Class
     ProcessContainer procs;
-    // Object which containts relevant methods and attributes regarding system details
+    // Object which contains relevant methods and attributes regarding system details
     SysInfo sys;
     //std::string s = writeToConsole(sys);
     printMain(sys, procs);
